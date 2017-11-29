@@ -1,7 +1,7 @@
 const config = {
-  author: "Füge hier dein Namen ein",
-  title: "Gebe deinem Kunstwerk einen Titel",
-  instructions: "Damit wir besser verstehen wie dein Kunstwerk generiert wird, schreibe bitte eine kurze Erklärung dazu."
+  author: "Benedikt Böhm",
+  title: "diva-e Christmas Card",
+  instructions: "Set params and press refresh. <br><br> Min and max angles: The amount of angles each star possesses. <br> Min and max length: The size of the stars. <br> Min and max repetitions: The length of the arms of each star."
 };
 
 export default config;
