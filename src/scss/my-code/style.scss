@@ -8,3 +8,9 @@
     padding-top: 10px;
   }
 }
+
+#logo,
+.star{
+  pointer-events: bounding-box;
+
+}
