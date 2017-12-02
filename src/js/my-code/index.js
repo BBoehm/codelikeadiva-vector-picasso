@@ -7,7 +7,7 @@ class Artwork {
         this.height = this.svg.getAttribute('height');
         this.xOffset = this.width/2;
         this.yOffset = this.height/2;
-        this.Paths = [];
+
         this.params={
             color: '#ffffff',
             backgroundColor: '#000000',
@@ -49,60 +49,64 @@ class Artwork {
         for (let i=0; i<this.params.count; i++) {
             const xOffset = Math.random() * this.width;
             const yOffset = Math.random() * this.height;
-            this.Paths.push('<g class="flower">');
+
             let length = Math.random() * (this.params.maxLength - this.params.minLength) + this.params.minLength;
 
-            let gElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            gElement.setAttribute('class', 'star');
-            gElement.setAttribute('id', 'star_' + i);
+            let gElement = this.createSvgElement('g', {id: 'star_' + i, class: 'star'}, this.svg);
 
             this.matrix[gElement.id] = [1, 0, 0, 1, 0, 0];
 
-            //select current element as active
+            //select current element for drag n drop
             gElement.addEventListener('mousedown', (e) => {
-                this.activeElement = gElement.id;
+                this.dragElement = gElement.id;
                 this.matrixX = this.matrix[gElement.id][4];
                 this.matrixY = this.matrix[gElement.id][5];
                 this.x = e.clientX;
                 this.y = e.clientY;
             });
 
-            //deselect
+            //deselect for drag n drop
             gElement.addEventListener('mouseup', () => {
-                this.activeElement = null;
+                this.dragElement = null;
             });
 
-            //move selected element
-            gElement.addEventListener('mousemove', (e) => {
-                if(this.activeElement === gElement.id){
-                    this.matrix[gElement.id][4] = this.matrixX + e.clientX - this.x;
-                    this.matrix[gElement.id][5] = this.matrixY + e.clientY - this.y;
-                    gElement.setAttribute('transform', 'matrix(' + this.matrix[gElement.id].join(' ') + ')');
-                }
+            //select / unselect as active element
+            gElement.addEventListener('dblclick', () => {
+                console.log(gElement.id);
+                this.activeElement = this.activeElement === gElement.id ? null : gElement.id;
+                console.log(this.activeElement);
             });
-
-            //resize selected element
-            gElement.addEventListener('mousewheel', (e) => {
-                //don't scroll the page while resizing
-                e.stopPropagation();
-                e.preventDefault();
-
-                if (this.activeElement === gElement.id){
-                    const delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-                    this.matrix[gElement.id][0] = this.matrix[gElement.id][0] + 0.01 * delta;
-                    this.matrix[gElement.id][3] = this.matrix[gElement.id][3] + 0.01 * delta;
-                    gElement.setAttribute('transform', 'matrix(' + this.matrix[gElement.id].join(' ') + ')');
-                }
-
-            }, false);
 
             this.createStar(xOffset, yOffset, length, gElement);
-            this.svg.appendChild(gElement);
         }
 
         if(this.textElement) {
             this.svg.appendChild(this.textElement);
         }
+
+        //move drag n drop element
+        this.svg.addEventListener('mousemove', (e) => {
+            if(this.dragElement){
+                this.matrix[this.dragElement][4] = this.matrixX + e.clientX - this.x;
+                this.matrix[this.dragElement][5] = this.matrixY + e.clientY - this.y;
+                document.querySelector('#' + this.dragElement).setAttribute('transform', 'matrix(' + this.matrix[this.dragElement].join(' ') + ')');
+            }
+        });
+
+        //resize active element
+        this.svg.addEventListener('mousewheel', (e) => {
+            //don't scroll the page while resizing
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (this.activeElement){
+                const delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+                this.matrix[this.activeElement][0] = this.matrix[this.activeElement][0] + 0.02 * delta;
+                this.matrix[this.activeElement][3] = this.matrix[this.activeElement][3] + 0.02 * delta;
+                document.querySelector('#' + this.activeElement).setAttribute('transform', 'matrix(' + this.matrix[this.activeElement].join(' ') + ')');
+            }
+
+        }, false);
 
     }
 
@@ -114,8 +118,7 @@ class Artwork {
         const angles = Math.round(Math.random() * (this.params.maxAngles - this.params.minAngles) + this.params.minAngles);
         const repetitions = Math.random() * (this.params.maxRepetitions - this.params.minRepetitions) + this.params.minRepetitions;
         for (let i=0; i< angles; i++){
-            let gElement = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            parent.appendChild(gElement);
+            let gElement = this.createSvgElement('g', {}, parent);
             this.createAngles(i, length, angleOffset, xOffset, yOffset, angles, repetitions, gElement);
         }
     }
@@ -133,128 +136,116 @@ class Artwork {
     //expands menu with list of changeable parameters
     createMenu(){
         const menu = document.querySelector('#menu');
-        let element = document.createElement('hr');
-        menu.appendChild(element);
-        const paramBox = document.createElement('div');
-        paramBox.className='param-box';
-        menu.appendChild(paramBox);
-        element = document.createElement('h3');
-        element.innerText = 'Parameter';
-        paramBox.appendChild(element);
+        this.createDomElement('hr', {}, menu);
+        const paramBox = this.createDomElement('div', {class: 'param-box'}, menu);
+
+        this.createDomElement('h3', {}, paramBox, 'Parameter');
 
         Object.keys(this.params).forEach(key => this.createParamElement(paramBox, key));
 
         this.createTextInput(paramBox);
 
-        const abstractContainer = document.createElement('div');
-        abstractContainer.className = 'params';
-        paramBox.appendChild(abstractContainer);
-        element = document.createElement('input');
-        element.setAttribute('type', 'checkbox');
-        element.addEventListener('change', (e) => this.abstract = e.target.checked);
+        const abstractContainer = this.createDomElement('div', {class: 'params'}, paramBox);
 
-        abstractContainer.appendChild(element);
-        const label = document.createElement('label');
-        label.innerText = 'Make it abstract!';
-        abstractContainer.appendChild(label);
+        let abstractCheckbox = this.createDomElement('input', {type: 'checkbox'}, abstractContainer);
+        abstractCheckbox.addEventListener('change', (e) => this.abstract = e.target.checked);
 
-        element = document.createElement('a');
-        element.setAttribute('href', '#');
-        element.innerText = 'Refresh';
-        element.addEventListener('click', () => this.redrawSvg());
-        menu.appendChild(element);
+        this.createDomElement('label', {class: 'params'}, abstractContainer, 'Make it abstract!');
+
+        let refreshButton = this.createDomElement('a', {href: '#'}, menu, 'Refresh');
+        refreshButton.addEventListener('click', () => this.redrawSvg());
     }
 
     //create Element consisting of label and input field with onChangeListener
-    createParamElement(parentNode, name){
-        const label = document.createElement('label');
-        label.className = 'params';
-        label.innerText = name + ': ';
-        parentNode.appendChild(label);
-        let element = document.createElement('input');
-        element.setAttribute('value', this.params[name]);
+    createParamElement(parent, name){
+        this.createDomElement('label', {class: 'params'}, parent, name + ': ');
+
+        let element = this.createDomElement('input', {value: this.params[name]}, parent);
         element.addEventListener('change', e => this.onAttributeChange(name, e.target.value));
-        parentNode.appendChild(element);
-        parentNode.appendChild(element);
     }
 
     createTextInput(parent){
-        let textInputLabel = document.createElement('label');
-        textInputLabel.setAttribute('class', 'params');
-
-        textInputLabel.innerText = 'Textnachricht: ';
-        let textInput = document.createElement('input');
+        this.createDomElement('label', {class: 'params'}, parent, 'text message: ');
+        let textInput = this.createDomElement('input', {}, parent);
 
         textInput.addEventListener('change', (e) => {
             this.text = e.target.value;
             if (e.target.value){
+
                 //remove existing text
                 let ex = document.querySelector('#logo');
                 if(document.querySelector('#logo')){
                     this.svg.removeChild(ex);
                 }
 
-                let text = document.createElementNS('http://www.w3.org/2000/svg','text');
-                text.id = 'logo';
-                text.style.fontSize = '20px';
-                text.setAttribute('x', '40');
-                text.setAttribute('y', '40');
-                text.setAttribute('fill', this.params.color);
+                let text = this.createSvgElement('text', {id: 'logo', class: 'no-select', y: 40, fill: this.params.color, style: 'fontsize: "20px"; userSelect: "none"'}, null);
 
-                text.style.userSelect = 'none';
-                text.textContent = e.target.value;
+                e.target.value.split('//').forEach((line) => {
+                    this.createSvgElement('tspan', {class: 'no-select', x: 40, dy: 20}, text, line);
+                });
 
                 this.matrix[text.id] = [1, 0, 0, 1, 0, 0];
 
-                //select current element as active
+                //select current element for drag n drop
                 text.addEventListener('mousedown', (e) => {
-                    this.activeElement = text.id;
+                    this.dragElement = text.id;
                     this.matrixX = this.matrix[text.id][4];
                     this.matrixY = this.matrix[text.id][5];
                     this.x = e.clientX;
                     this.y = e.clientY;
                 });
 
-                //deselect
+                //deselect for drag n drop
                 text.addEventListener('mouseup', () => {
-                    this.activeElement = null;
+                    this.dragElement = null;
                 });
 
-                //move selected element
-                text.addEventListener('mousemove', (e) => {
-                    if(this.activeElement === text.id){
-                        this.matrix[text.id][4] = this.matrixX + e.clientX - this.x;
-                        this.matrix[text.id][5] = this.matrixY + e.clientY - this.y;
-                        text.setAttribute('transform', 'matrix(' + this.matrix[text.id].join(' ') + ')');
-                    }
+                //select / unselect as active element
+                text.addEventListener('dblclick', () => {
+                    this.activeElement = this.activeElement === text.id ? null : text.id;
                 });
-
-                //resize selected element
-                text.addEventListener('mousewheel', (e) => {
-                    //don't scroll the page while resizing
-                    e.stopPropagation();
-                    e.preventDefault();
-
-                    if (this.activeElement === text.id){
-                        const delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-                        this.matrix[text.id][0] = this.matrix[text.id][0] + 0.02 * delta;
-                        this.matrix[text.id][3] = this.matrix[text.id][3] + 0.02 * delta;
-                        text.setAttribute('transform', 'matrix(' + this.matrix[text.id].join(' ') + ')');
-                    }
-
-                }, false);
 
                 this.textElement = text;
             }
         });
 
-        parent.append(textInputLabel);
-        parent.append(textInput);
     }
 
     onAttributeChange(type, e){
         this.params[type] = isFinite(e) ? parseInt(e) : e;
         //this.redrawSvg();
+    }
+
+    //creates svg element for dom, sets attributes and textContent, attaches it to parent and returns it
+    createSvgElement(type, attributes, parent, textContent){
+        let element = document.createElementNS('http://www.w3.org/2000/svg', type);
+        element.textContent = textContent;
+
+        Object.keys(attributes).forEach(key => {
+            element.setAttribute(key, attributes[key]);
+        });
+
+        if (parent) {
+            parent.append(element);
+        }
+
+        return element;
+    }
+
+    //creates element for dom, sets attributes and innerText, attaches it to parent and returns it
+    createDomElement(type, attributes, parent, innerText){
+        let element = document.createElement(type);
+        element.innerText = innerText || null; //we don't want undefined as innerText
+
+        Object.keys(attributes).forEach(key => {
+            element.setAttribute(key, attributes[key]);
+        });
+
+        if (parent) {
+            parent.append(element);
+        }
+
+        return element;
     }
 
 }
@@ -282,13 +273,28 @@ class Angle{
         const moveX = Math.sin(toRadians(movingAngle)) * (abstract ? Math.random() : 1) * moveLength * this.length / 100;
         const moveY = -Math.cos(toRadians(movingAngle)) * (abstract ? Math.random() : 1) * moveLength * this.length / 100;
 
-        let pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        pathElement.setAttribute('id', 'angle_' + currentAngle);
-        pathElement.setAttribute('transform', 'translate(' + moveX + ' ' + moveY + ')');
-        pathElement.setAttribute('d', 'M ' + this.xOffset + ' ' + this.yOffset + ' L ' + x0 + ' ' + y0 + ' M ' + this.xOffset + ' ' + this.yOffset + ' L ' + x1 + ' ' + y1 + ' ');
-        pathElement.setAttribute('fill', 'none');
-        pathElement.setAttribute('stroke', this.color);
-        return pathElement;
+        return this.createSvgElement('path', {id: 'angle_' + currentAngle, transform: 'translate(' + moveX + ' ' + moveY + ')',
+            d: 'M ' + this.xOffset + ' ' + this.yOffset + ' L ' + x0 + ' ' + y0 + ' M ' + this.xOffset + ' ' + this.yOffset + ' L ' + x1 + ' ' + y1 + ' ',
+            fill: 'none',
+            stroke: this.color,
+        }, null);
+    }
+
+    //creates svg element for dom, sets attributes and textContent, attaches it to parent and returns it
+    createSvgElement(type, attributes, parent, textContent){
+        let element = document.createElementNS('http://www.w3.org/2000/svg', type);
+
+        Object.keys(attributes).forEach(key => {
+            element.setAttribute(key, attributes[key]);
+        });
+
+        element.textContent = textContent;
+
+        if (parent) {
+            parent.append(element);
+        }
+
+        return element;
     }
 }
 

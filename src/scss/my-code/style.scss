@@ -1,3 +1,4 @@
+//style own menu
 .param-box{
   display: grid;
   margin-bottom: 16px;
@@ -9,8 +10,21 @@
   }
 }
 
+//make drag and drop as well as selecting svg easier
 #logo,
 .star{
   pointer-events: bounding-box;
+}
 
+//disable svg text select
+//disable unwanted select of wrong element on svg dblclick
+#menu a,
+#menu p,
+.title,
+.artist,
+.no-select{
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
