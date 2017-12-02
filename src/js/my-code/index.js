@@ -1,4 +1,4 @@
-import toRadians from './helpers';
+import toRadians, { toDegrees } from './helpers';
 
 class Artwork {
     constructor() {
@@ -72,9 +72,7 @@ class Artwork {
 
             //select / unselect as active element
             gElement.addEventListener('dblclick', () => {
-                console.log(gElement.id);
                 this.activeElement = this.activeElement === gElement.id ? null : gElement.id;
-                console.log(this.activeElement);
             });
 
             this.createStar(xOffset, yOffset, length, gElement);
@@ -89,7 +87,7 @@ class Artwork {
             if(this.dragElement){
                 this.matrix[this.dragElement][4] = this.matrixX + e.clientX - this.x;
                 this.matrix[this.dragElement][5] = this.matrixY + e.clientY - this.y;
-                document.querySelector('#' + this.dragElement).setAttribute('transform', 'matrix(' + this.matrix[this.dragElement].join(' ') + ')');
+                document.getElementById(this.dragElement).setAttribute('transform', 'matrix(' + this.matrix[this.dragElement].join(' ') + ')');
             }
         });
 
@@ -101,11 +99,40 @@ class Artwork {
 
             if (this.activeElement){
                 const delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+
                 this.matrix[this.activeElement][0] = this.matrix[this.activeElement][0] + 0.02 * delta;
                 this.matrix[this.activeElement][3] = this.matrix[this.activeElement][3] + 0.02 * delta;
-                document.querySelector('#' + this.activeElement).setAttribute('transform', 'matrix(' + this.matrix[this.activeElement].join(' ') + ')');
+
+                document.getElementById(this.activeElement).setAttribute('transform', 'matrix(' + this.matrix[this.activeElement].join(' ') + ')');
+            }
+        }, false);
+
+
+        //rotate active element
+        document.addEventListener('keydown', (e) => {
+            let direction = 0;
+            switch (e.keyCode){
+                case 37: direction = 359; break; //1 degree left
+                case 39: direction = 1; break;
+                default: direction = 0;
             }
 
+            if (this.activeElement){
+                let alpha = toDegrees(Math.asin(this.matrix[this.activeElement][1]));
+                const bbox = document.getElementById(this.activeElement).getBBox();
+                const centerX = bbox.x + bbox.width / 2;
+                const centerY = bbox.y + bbox.height / 2;
+                const newAlpha = toRadians((alpha + direction) % 360);
+
+                this.matrix[this.activeElement][0] = Math.cos(newAlpha);
+                this.matrix[this.activeElement][1] = Math.sin(newAlpha);
+                this.matrix[this.activeElement][2] = -Math.sin(newAlpha);
+                this.matrix[this.activeElement][3] = Math.cos(newAlpha);
+                this.matrix[this.activeElement][4] = this.matrixX - Math.cos(newAlpha) * centerX + Math.sin(newAlpha) * centerY + centerX;
+                this.matrix[this.activeElement][5] = this.matrixY - Math.sin(newAlpha) * centerX - Math.cos(newAlpha) * centerY + centerY;
+
+                document.getElementById(this.activeElement).setAttribute('transform', 'matrix(' + this.matrix[this.activeElement].join(' ') + ')');
+            }
         }, false);
 
     }
@@ -135,7 +162,7 @@ class Artwork {
 
     //expands menu with list of changeable parameters
     createMenu(){
-        const menu = document.querySelector('#menu');
+        const menu = document.getElementById('menu');
         this.createDomElement('hr', {}, menu);
         const paramBox = this.createDomElement('div', {class: 'param-box'}, menu);
 
@@ -173,8 +200,8 @@ class Artwork {
             if (e.target.value){
 
                 //remove existing text
-                let ex = document.querySelector('#logo');
-                if(document.querySelector('#logo')){
+                let ex = document.getElementById('logo');
+                if(ex){
                     this.svg.removeChild(ex);
                 }
 

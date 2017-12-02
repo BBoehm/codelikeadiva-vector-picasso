@@ -2,5 +2,8 @@ function toRadians(angle){
     return angle * Math.PI / 180;
 }
 
-//export toRadians();
+export function toDegrees(angle){
+    return angle * 180 / Math.PI;
+}
+
 export default toRadians;

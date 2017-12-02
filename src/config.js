@@ -3,7 +3,8 @@ const config = {
   title: "diva-e Christmas Card",
   instructions: "Set params and press refresh. " +
   "<br>You can drag and drop elements." +
-  "<br>You can resize elements by double clicking them, then scrolling " +
+  "<br>You can resize elements by scrolling after double clicking an element" +
+  "<br>You can rotate elements by pressing arrow left or left after double clicking an element" +
   "<br>" +
   "<br>" +
   "<br>Parameters:" +
