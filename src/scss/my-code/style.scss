@@ -1,10 +1,10 @@
 //style own menu
-.param-box{
+.param-box {
   display: grid;
   margin-bottom: 16px;
   text-align: left;
 
-  .params{
+  .params {
     padding-bottom: 3px;
     padding-top: 10px;
   }
@@ -12,8 +12,12 @@
 
 //make drag and drop as well as selecting svg easier
 #text,
-.star{
+.star {
   pointer-events: bounding-box;
+}
+
+.m-t-20 {
+  margin-top: 20px;
 }
 
 #active-menu {
@@ -37,7 +41,7 @@
 #menu p,
 .title,
 .artist,
-.no-select{
+.no-select {
   -moz-user-select: none;
   -ms-user-select: none;
   -webkit-user-select: none;
