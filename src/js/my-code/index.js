@@ -8,6 +8,9 @@ class Artwork {
         this.xOffset = this.width/2;
         this.yOffset = this.height/2;
 
+        this.nextTextId = 0;
+        this.shouldUpdateStars = true;
+
         this.params={
             color: '#ffffff',
             backgroundColor: '#000000',
@@ -24,6 +27,7 @@ class Artwork {
     init() {
         this.createMenu();
         this.createActiveMenu();
+        this.addEventListeners();
         this.redrawSvg();
     }
 
@@ -35,67 +39,34 @@ class Artwork {
             this.params.color = '#' + this.params.color;
         }
 
-        this.svg.innerHTML = ''
-            + '<filter id="lightMe1">'
-            + '<feDiffuseLighting in="SourceGraphic" result="light" lighting-color="white">'
-            + '<fePointLight x="220" y="80" z="220" />'
-            + '</feDiffuseLighting>'
-            + '<feComposite in="SourceGraphic" in2="light" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/>'
-            + '</filter>'
-            + '<rect fill="' + this.params.backgroundColor + '" x="0" y="0" width="' + this.width + '" height="' + this.height + '" filter="url(#lightMe1)"/>'
-            + this.logoPath;
+        if(this.shouldUpdateStars) {
+            this.svg.innerHTML = ''
+                + '<filter id="lightMe1">'
+                + '<feDiffuseLighting in="SourceGraphic" result="light" lighting-color="white">'
+                + '<fePointLight x="220" y="80" z="220" />'
+                + '</feDiffuseLighting>'
+                + '<feComposite in="SourceGraphic" in2="light" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/>'
+                + '</filter>'
+                + '<rect fill="' + this.params.backgroundColor + '" x="0" y="0" width="' + this.width + '" height="' + this.height + '" filter="url(#lightMe1)"/>'
+                + this.logoPath;
+        }
+
+        console.log('redraw');
 
         this.matrix = this.matrix || {};
 
-        for (let i=0; i<this.params.count; i++) {
-            const xOffset = Math.random() * this.width;
-            const yOffset = Math.random() * this.height;
-
-            let length = Math.random() * (this.params.maxLength - this.params.minLength) + this.params.minLength;
-
-            let gElement = this.createSvgElement('g', {id: 'star_' + i, class: 'star'}, this.svg);
-
-            this.matrix[gElement.id] = [1, 0, 0, 1, 0, 0];
-
-            //select current element for drag n drop
-            gElement.addEventListener('mousedown', (e) => {
-                this.activeElement = null;
-                this.dragElement = gElement.id;
-                this.matrixX = this.matrix[gElement.id][4];
-                this.matrixY = this.matrix[gElement.id][5];
-                this.x = e.clientX;
-                this.y = e.clientY;
-                document.getElementById('active-element-container').innerText = this.dragElement;
-            });
-
-            //deselect for drag n drop
-            gElement.addEventListener('mouseup', () => {
-                this.dragElement = null;
-                this.activeElement = null;
-                this.matrixX = this.matrix[gElement.id][4];
-                this.matrixY = this.matrix[gElement.id][5];
-                document.getElementById('active-element-container').innerText = null;
-            });
-
-            //select / unselect as active element
-            gElement.addEventListener('dblclick', () => {
-                if (this.activeElement === gElement.id){
-                    this.activeElement = null;
-                } else {
-                    this.activeElement = gElement.id;
-                    this.matrixX = this.matrix[gElement.id][4];
-                    this.matrixY = this.matrix[gElement.id][5];
-                }
-                document.getElementById('active-element-container').innerText = this.activeElement;
-            });
-
-            this.createStar(xOffset, yOffset, length, gElement);
+        if(this.shouldUpdateStars) {
+            this.createStars();
         }
 
         if(this.textElement) {
             this.svg.appendChild(this.textElement);
         }
 
+        this.shouldUpdateStars = true;
+    }
+
+    addEventListeners(){
         //move drag n drop element
         this.svg.addEventListener('mousemove', (e) => {
             if(this.dragElement){
@@ -148,8 +119,54 @@ class Artwork {
                 document.getElementById(this.activeElement).setAttribute('transform', 'matrix(' + this.matrix[this.activeElement].join(' ') + ')');
             }
         }, false);
-
     }
+
+    createStars(){
+        for (let i=0; i<this.params.count; i++) {
+            const xOffset = Math.random() * this.width;
+            const yOffset = Math.random() * this.height;
+
+            let length = Math.random() * (this.params.maxLength - this.params.minLength) + this.params.minLength;
+
+            let gElement = this.createSvgElement('g', {id: 'star_' + i, class: 'star'}, this.svg);
+
+            this.matrix[gElement.id] = [1, 0, 0, 1, 0, 0];
+
+            //select current element for drag n drop
+            gElement.addEventListener('mousedown', (e) => {
+                this.activeElement = null;
+                this.dragElement = gElement.id;
+                this.matrixX = this.matrix[gElement.id][4];
+                this.matrixY = this.matrix[gElement.id][5];
+                this.x = e.clientX;
+                this.y = e.clientY;
+                document.getElementById('active-element-container').innerText = this.dragElement;
+            });
+
+            //deselect for drag n drop
+            gElement.addEventListener('mouseup', () => {
+                this.dragElement = null;
+                this.activeElement = null;
+                this.matrixX = this.matrix[gElement.id][4];
+                this.matrixY = this.matrix[gElement.id][5];
+                document.getElementById('active-element-container').innerText = null;
+            });
+
+            //select / unselect as active element
+            gElement.addEventListener('dblclick', () => {
+                if (this.activeElement === gElement.id){
+                    this.activeElement = null;
+                } else {
+                    this.activeElement = gElement.id;
+                    this.matrixX = this.matrix[gElement.id][4];
+                    this.matrixY = this.matrix[gElement.id][5];
+                }
+                document.getElementById('active-element-container').innerText = this.activeElement;
+            });
+
+            this.createStar(xOffset, yOffset, length, gElement);
+        }
+    };
 
     //creates star on random place consisting of [this.params.angles] parts
     createStar(xOffset, yOffset, length, parent){
@@ -216,6 +233,8 @@ class Artwork {
         let textInput = this.createDomElement('input', {}, parent);
 
         textInput.addEventListener('change', (e) => {
+            this.shouldUpdateStars = false;
+
             this.text = e.target.value;
             if (e.target.value){
 
@@ -225,7 +244,8 @@ class Artwork {
                     this.svg.removeChild(ex);
                 }
 
-                let text = this.createSvgElement('text', {id: 'text', class: 'no-select', y: 40, fill: this.params.color, style: 'fontsize: "20px"; userSelect: "none"'}, null);
+                let text = this.createSvgElement('text', {id: 'text_' + this.nextTextId, class: 'no-select', y: 40, fill: this.params.color, style: 'fontsize: "20px"; userSelect: "none"'}, null);
+                this.nextTextId++;
 
                 e.target.value.split('//').forEach((line) => {
                     this.createSvgElement('tspan', {class: 'no-select', x: 40, dy: 20}, text, line);
