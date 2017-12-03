@@ -23,6 +23,7 @@ class Artwork {
 
     init() {
         this.createMenu();
+        this.createActiveMenu();
         this.redrawSvg();
     }
 
@@ -58,21 +59,34 @@ class Artwork {
 
             //select current element for drag n drop
             gElement.addEventListener('mousedown', (e) => {
+                this.activeElement = null;
                 this.dragElement = gElement.id;
                 this.matrixX = this.matrix[gElement.id][4];
                 this.matrixY = this.matrix[gElement.id][5];
                 this.x = e.clientX;
                 this.y = e.clientY;
+                document.getElementById('active-element-container').innerText = this.dragElement;
             });
 
             //deselect for drag n drop
             gElement.addEventListener('mouseup', () => {
                 this.dragElement = null;
+                this.activeElement = null;
+                this.matrixX = this.matrix[gElement.id][4];
+                this.matrixY = this.matrix[gElement.id][5];
+                document.getElementById('active-element-container').innerText = null;
             });
 
             //select / unselect as active element
             gElement.addEventListener('dblclick', () => {
-                this.activeElement = this.activeElement === gElement.id ? null : gElement.id;
+                if (this.activeElement === gElement.id){
+                    this.activeElement = null;
+                } else {
+                    this.activeElement = gElement.id;
+                    this.matrixX = this.matrix[gElement.id][4];
+                    this.matrixY = this.matrix[gElement.id][5];
+                }
+                document.getElementById('active-element-container').innerText = this.activeElement;
             });
 
             this.createStar(xOffset, yOffset, length, gElement);
@@ -183,6 +197,12 @@ class Artwork {
         refreshButton.addEventListener('click', () => this.redrawSvg());
     }
 
+    createActiveMenu() {
+        this.activeMenu = this.createDomElement('div', {id: 'active-menu'}, document.getElementsByTagName('body')[0]);
+        this.createDomElement('h3', {}, this.activeMenu, 'Active Element');
+        this.createDomElement('p', {id: 'active-element-container'}, this.activeMenu, ' ');
+    }
+
     //create Element consisting of label and input field with onChangeListener
     createParamElement(parent, name){
         this.createDomElement('label', {class: 'params'}, parent, name + ': ');
@@ -200,12 +220,12 @@ class Artwork {
             if (e.target.value){
 
                 //remove existing text
-                let ex = document.getElementById('logo');
+                let ex = document.getElementById('text');
                 if(ex){
                     this.svg.removeChild(ex);
                 }
 
-                let text = this.createSvgElement('text', {id: 'logo', class: 'no-select', y: 40, fill: this.params.color, style: 'fontsize: "20px"; userSelect: "none"'}, null);
+                let text = this.createSvgElement('text', {id: 'text', class: 'no-select', y: 40, fill: this.params.color, style: 'fontsize: "20px"; userSelect: "none"'}, null);
 
                 e.target.value.split('//').forEach((line) => {
                     this.createSvgElement('tspan', {class: 'no-select', x: 40, dy: 20}, text, line);
@@ -215,21 +235,34 @@ class Artwork {
 
                 //select current element for drag n drop
                 text.addEventListener('mousedown', (e) => {
+                    this.activeElement = null;
                     this.dragElement = text.id;
                     this.matrixX = this.matrix[text.id][4];
                     this.matrixY = this.matrix[text.id][5];
                     this.x = e.clientX;
                     this.y = e.clientY;
+                    document.getElementById('active-element-container').innerText = this.dragElement;
                 });
 
                 //deselect for drag n drop
                 text.addEventListener('mouseup', () => {
                     this.dragElement = null;
+                    this.activeElement = null;
+                    this.matrixX = this.matrix[text.id][4];
+                    this.matrixY = this.matrix[text.id][5];
+                    document.getElementById('active-element-container').innerText = null;
                 });
 
                 //select / unselect as active element
                 text.addEventListener('dblclick', () => {
-                    this.activeElement = this.activeElement === text.id ? null : text.id;
+                    if (this.activeElement === text.id){
+                        this.activeElement = null;
+                    } else {
+                        this.activeElement = text.id;
+                        this.matrixX = this.matrix[text.id][4];
+                        this.matrixY = this.matrix[text.id][5];
+                    }
+                    document.getElementById('active-element-container').innerText = this.activeElement;
                 });
 
                 this.textElement = text;
@@ -260,9 +293,9 @@ class Artwork {
     }
 
     //creates element for dom, sets attributes and innerText, attaches it to parent and returns it
-    createDomElement(type, attributes, parent, innerText){
+    createDomElement(type, attributes, parent, innerText = null){
         let element = document.createElement(type);
-        element.innerText = innerText || null; //we don't want undefined as innerText
+        element.innerText = innerText;
 
         Object.keys(attributes).forEach(key => {
             element.setAttribute(key, attributes[key]);

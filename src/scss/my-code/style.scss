@@ -11,9 +11,24 @@
 }
 
 //make drag and drop as well as selecting svg easier
-#logo,
+#text,
 .star{
   pointer-events: bounding-box;
+}
+
+#active-menu {
+  position: fixed;
+  top: 10%;
+  right: 0;
+  width: auto;
+  height: auto;
+  padding: 20px;
+  background-color: rgba(lightgrey, 0.7);
+
+  p {
+    margin-bottom: 0;
+    height: 16px;
+  }
 }
 
 //disable svg text select
