@@ -51,8 +51,6 @@ class Artwork {
                 + this.logoPath;
         }
 
-        console.log('redraw');
-
         this.matrix = this.matrix || {};
 
         if(this.shouldUpdateStars) {
@@ -61,6 +59,7 @@ class Artwork {
 
         if(this.textElement) {
             this.svg.appendChild(this.textElement);
+            this.textElement = null;
         }
 
         this.shouldUpdateStars = true;
