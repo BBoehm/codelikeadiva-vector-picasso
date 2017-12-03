@@ -343,7 +343,6 @@ class Artwork {
 
     onAttributeChange(type, e){
         this.params[type] = isFinite(e) ? parseInt(e) : e;
-        // this.redrawSvg();
     }
 
 }
