@@ -10,7 +10,7 @@ const config = {
   "<br>" +
   "<br>" +
   "<br>Parameters:" +
-  "<br> Color: If starts with '#', show diva-e logo, otherwise hide it (#ffffff vs. ffffff)" +
+  "<br> " +
   "<br> Min and max angles: The amount of angles each star possesses. " +
   "<br> Min and max length: The size of the stars. " +
   "<br> Min and max repetitions: The length of the arms of each star." +
